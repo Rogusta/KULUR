@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR ELF Linker V7.80.3.12102/W32 for ARM                22/Feb/2017  08:16:42
+# IAR ELF Linker V7.80.3.12102/W32 for ARM                22/Feb/2017  09:21:24
 # Copyright 2007-2016 IAR Systems AB.
 #
 #    Output file  =  
@@ -523,9 +523,9 @@ HAL_UART_IRQHandler     0x08001c33   0xe8  Code  Gb  stm32f3xx_hal_uart.o [1]
 HAL_UART_Init           0x08001bc9   0x6a  Code  Gb  stm32f3xx_hal_uart.o [1]
 HAL_UART_MspInit        0x0800115b   0x54  Code  Gb  usart.o [1]
 HAL_UART_RxCpltCallback
-                        0x08000bbb    0xa  Code  Gb  main.o [1]
+                        0x08000bb9    0xa  Code  Gb  main.o [1]
 HAL_UART_TxCpltCallback
-                        0x08000bb1    0xa  Code  Gb  main.o [1]
+                        0x08000baf    0xa  Code  Gb  main.o [1]
 HEAP$$Base              0x200004f0          --   Gb  - Linker created -
 HEAP$$Limit             0x200006f0          --   Gb  - Linker created -
 LoadInt                 0x080026e5   0x4c  Code  Lc  xprintfsmall_nomb.o [3]
@@ -543,14 +543,14 @@ NVIC_SetPriorityGrouping
                         0x08000e65   0x1a  Code  Lc  stm32f3xx_hal_cortex.o [1]
 PendSV_Handler          0x08003071         Code  Gb  portasm.o [1]
 RTC_EnterInitMode       0x080022d1   0x34  Code  Gb  stm32f3xx_hal_rtc.o [1]
-Radio_data              0x08000aef   0xc2  Code  Gb  main.o [1]
+Radio_data              0x08000aef   0xc0  Code  Gb  main.o [1]
 Radio_data::data_array  0x200007a4   0xa0  Data  Lc  main.o [1]
 Region$$Table$$Base     0x080034a8          --   Gb  - Linker created -
 Region$$Table$$Limit    0x080034c8          --   Gb  - Linker created -
 SVC_Handler             0x080030c9         Code  Gb  portasm.o [1]
 SysTick_Config          0x08000eeb   0x28  Code  Lc  stm32f3xx_hal_cortex.o [1]
 SysTick_Handler         0x0800343d    0xe  Code  Gb  stm32f3xx_it.o [1]
-SystemClock_Config      0x08000bc5   0x9c  Code  Gb  main.o [1]
+SystemClock_Config      0x08000bc3   0x9c  Code  Gb  main.o [1]
 SystemCoreClock         0x20000000    0x4  Data  Gb  system_stm32f3xx.o [1]
 SystemInit              0x08003199   0x52  Code  Gb  system_stm32f3xx.o [1]
 TIM1_CC_IRQHandler      0x0800344b    0x6  Code  Gb  stm32f3xx_it.o [1]
