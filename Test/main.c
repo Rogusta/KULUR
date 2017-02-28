@@ -52,6 +52,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "crc.h"
+#include <math.h>
+#include <stdbool.h>
+
 
 #define MESSAGE_BUFFERSIZE 43
 #define DATE_BUFFERSIZE 10
@@ -63,9 +66,9 @@ RTC_HandleTypeDef hrtc;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
-void display(int);
+void Display(int, bool);
 void RTC_TimeConfig(int[], int[]);
-void RTC_TimeShow(void);
+void RTC_TimeShow(uint16_t*, uint16_t*);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle);
 void Uart_function();
@@ -89,9 +92,11 @@ int main(void)
   SystemClock_Config();
 
   /* Initialize all configured peripherals */
+  
   MX_GPIO_Init();
   MX_USART3_UART_Init();
   MX_RTC_Init();
+  //Uart_function(); //:::::::::::::::::::::::::::::::::::::
   MX_TIM1_Init();
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
@@ -108,27 +113,27 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //Uart_function(); //:::::::::::::::::::::::::::::::::::::
-  for(int i=0; i<9; i++)// kollar preamblen så att en blir 9 innan vi fyller arrayen
+  
+  /*for(int i=0; i<9; i++)// kollar preamblen så att en blir 9 innan vi fyller arrayen
   {
     HAL_GPIO_WritePin(GPIOE, LD4_Pin,GPIO_PIN_SET);
     HAL_Delay(5);
     HAL_GPIO_WritePin(GPIOE, LD4_Pin,GPIO_PIN_RESET);
     HAL_Delay(5);
-  }
-    
+  }*/
+
   while (1)
-  {
+  {/*
     HAL_GPIO_WritePin(GPIOE, LD4_Pin,GPIO_PIN_SET);
-    HAL_Delay(2);
+    HAL_Delay(5);
     HAL_GPIO_WritePin(GPIOE, LD4_Pin,GPIO_PIN_RESET);
     HAL_Delay(2);
     HAL_GPIO_WritePin(GPIOE, LD4_Pin,GPIO_PIN_SET);
-    HAL_Delay(4);
+    HAL_Delay(5);
     HAL_GPIO_WritePin(GPIOE, LD4_Pin,GPIO_PIN_RESET);
-    HAL_Delay(4);
+    HAL_Delay(4);*/
     
-    //RTC_TimeShow();
+    Display(0, false);
 
   }
   /* USER CODE END 3 */
@@ -142,62 +147,80 @@ void Radio_data(uint32_t duty_array[])
   
   for(int i =0; i<40; i++)
   {
-    /* Översätter värden i array till ett lr noll. (550-1550)*/
-    if(duty_array[i] > 1500 && duty_array[i] < 2500)
+    /* Översätter värden i array till ett lr noll. (550-700)*/
+    if(duty_array[i] > 500 && duty_array[i] < 800)
     {
       data_array[i] = 1;
     }
     else
       data_array[i] = 0;
   }
-  data_array[0] = 1;
-  data_array[1] = 0;
-  data_array[2] = 1;
-  data_array[3] = 1;
+  /*
+  data_array[0] = 0;
+  data_array[1] = 1;
+  data_array[2] = 0;
+  data_array[3] = 0;
   data_array[4] = 1;
   data_array[5] = 0;
-  data_array[6] = 1;
+  data_array[6] = 0;
   data_array[7] = 0;
     
   data_array[8] = 0;
   data_array[9] = 1;
-  data_array[10] = 0;
-  data_array[11] = 0;
+  data_array[10] = 1;
+  data_array[11] = 1;
   data_array[12] = 0;
-  data_array[13] = 1;
-  data_array[14] = 0;
+  data_array[13] = 0;
+  data_array[14] = 0;// temp början
   data_array[15] = 0;
     
   data_array[16] = 1;
   data_array[17] = 1;
-  data_array[18] = 1;
-  data_array[19] = 0;
-  data_array[20] = 1;
-  data_array[21] = 0;
+  data_array[18] = 0;
+  data_array[19] = 1;
+  data_array[20] = 0;
+  data_array[21] = 1;
   data_array[22] = 1;
-  data_array[23] = 1;
+  data_array[23] = 1;// temp slut
     
   data_array[24] = 0;
   data_array[25] = 0;
-  data_array[26] = 0;
+  data_array[26] = 1;
   data_array[27] = 0;
-  data_array[28] = 1;
-  data_array[29] = 1;
+  data_array[28] = 0;
+  data_array[29] = 0;
   data_array[30] = 1;
   data_array[31] = 0;
     
   data_array[32] = 0;
-  data_array[33] = 0;
+  data_array[33] = 1;
   data_array[34] = 0;
   data_array[35] = 1;
-  data_array[36] = 0;
-  data_array[37] = 0;
-  data_array[38] = 1;
-  data_array[39] = 0;
+  data_array[36] = 1;
+  data_array[37] = 1;
+  data_array[38] = 0;
+  data_array[39] = 1;*/
 
+  //printf("crc: %d\n", HAL_CRC_Calculate(&hcrc, data_array, 40));
+  int temp_value = 0;
 
-  printf("crc: %d\n", HAL_CRC_Calculate(&hcrc, data_array, BufferLength));
+  //if(HAL_CRC_Calculate(&hcrc, data_array, 40) == 0)
+  //{
   
+    //int temp_value = 0;
+    for(int i = 0; i < 9; i++)
+    {
+      temp_value += data_array[23-i] * (pow(2, i));
+    }
+    //temp_value = temp_value - 1;
+    //printf("temeratur %d \n", temp_value);
+    temp_value = temp_value/2;
+
+    Display(temp_value, true);
+
+  //}
+  
+  return;
   
 }
 
@@ -240,6 +263,7 @@ void Uart_function()
       Error_Handler();
     }
     /*Wait for the end of the receive*/
+    
     while(UartReady != SET)
     {
     }
@@ -272,7 +296,6 @@ void Uart_function()
    }
    date[0] = date[0] % 100;
 
-   //RTC_TimeConfig(date);
 //---------------------------End UART date--------------------------------------
 
   if(HAL_UART_Transmit_IT(&huart3, (uint8_t *)Time, 7) != HAL_OK)//skriver ut text Time i UART:
@@ -350,12 +373,12 @@ void RTC_TimeConfig(int date[], int time[])
   //stimestructure.StoreOperation = RTC_STOREOPERATION_RESET;
   
   HAL_RTC_SetDate(&hrtc, &sdatestructure, RTC_FORMAT_BCD);
-  HAL_RTC_SetTime(&hrtc, &stimestructure, RTC_FORMAT_BCD);
+  HAL_RTC_SetTime(&hrtc, &stimestructure, RTC_FORMAT_BIN);
   HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
 }
 
 //__________________________Time show function__________________________________
-void RTC_TimeShow()
+void RTC_TimeShow(uint16_t *hours, uint16_t *minute)
 {
   RTC_TimeTypeDef stimestructureget;
   RTC_DateTypeDef sdatestructureget;
@@ -364,15 +387,69 @@ void RTC_TimeShow()
   /* Get the RTC current Date */
   HAL_RTC_GetDate(&hrtc, &sdatestructureget, RTC_FORMAT_BCD);
   
+
   /* Display time Format : hh:mm:ss */
-  printf("%2d:%2d:%2d\n", stimestructureget.Hours, stimestructureget.Minutes, stimestructureget.Seconds);
+  //printf("%2d:%2d:%2d\n", stimestructureget.Hours, stimestructureget.Minutes, stimestructureget.Seconds);
   //printf("%2d:%2d:%2d\n", sdatestructureget.Year, sdatestructureget.Month, sdatestructureget.Date);
-  display(stimestructureget.Seconds); 
+  *hours = stimestructureget.Hours;
+  *minute = stimestructureget.Minutes;
+
 }
 //___________________________Display function___________________________________
-void display(int nr)
+void Display(int temp, bool temp_flag)
 {
-   static int segmentSelect = 0;
+    
+    int counter = 0;
+    static int value_array[8];
+    
+   static int tempTioTal;
+   static int tempEnTal;
+   static int tempDecTal;
+    
+  /*if(temp> 512) //ska visa minustecken i display
+    {
+      int minus = 10; // case 10 för ett minus
+      value_array[4] = minus;
+    }
+    else value_array[4] = 11;*/ // inget visas i display
+    
+    if(temp_flag)
+    {
+      tempTioTal = temp/100;
+      tempEnTal = (temp%100)/10;
+      tempDecTal = temp%10;
+    }
+
+    uint16_t hours = 0;
+    uint16_t minute = 0;
+    
+    RTC_TimeShow(&hours, &minute);
+    
+
+    value_array[0] = hours/10;
+    value_array[1] = hours%10;
+    value_array[2] = minute/10;
+    value_array[3] = minute%10;
+    value_array[4] = 11; //Om temp är positivt, inget i display
+    value_array[5] = tempTioTal;
+    value_array[6] = tempEnTal;
+    value_array[7] = tempDecTal;
+
+    uint32_t current_second = HAL_GetTick();
+    static uint32_t last_second;
+    if ((current_second - last_second) > 500)
+    {    
+    last_second = current_second;        
+    HAL_GPIO_TogglePin(GPIOC,Kolon_Pin);
+    }
+    
+    
+    int segmentSelect = 0;
+while(segmentSelect < 8)
+{
+    for(int i= 0; i<9000; i++)
+    {
+    }
     switch(segmentSelect) // State machine val av 7-seg
     {
 //----------------------------select clk display-----------------------------------
@@ -380,64 +457,113 @@ void display(int nr)
         HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+       
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET); 
+        
         break;
         
       case 1: // clock display 2
         HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_RESET); // Kolon sätts på clk display 2
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+       
+       
+        HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET);         
         break;
         
       case 2: // clock display 3
         HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+        //HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_SET);
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET);         
         break;
         
       case 3: // clock display 4
         HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_SET);
+       
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET);         
         break;
 //-----------------------------select temp display---------------------------------
       case 4:// temp display 1
         HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET); 
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+        //HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_RESET);
         break;
         
       case 5:// temp display 2
         HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_RESET); //Punkt sätts på temp display 2
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET);
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+        //HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_RESET);        
         break;
         
       case 6:// temp display 3
         HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_RESET);
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+        //HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_RESET);
         break;
         
       case 7:// temp display 4
         HAL_GPIO_WritePin(GPIOC, DIG1term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG2term_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOC, DIG3term_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOC, DIG4term_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOD, DP_led_Pin, GPIO_PIN_SET);
+        
+        HAL_GPIO_WritePin(GPIOC, DIG1clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG2clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG3clk_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOC, DIG4clk_Pin, GPIO_PIN_RESET);
+        //HAL_GPIO_WritePin(GPIOC, Kolon_Pin, GPIO_PIN_RESET);
         break;
         
     default:
@@ -446,8 +572,7 @@ void display(int nr)
         
         
 //--------------------------Number for displays---------------------------------
-    nr = nr % 10;
-    switch(nr) // State machine val av nummer
+    switch(value_array[counter]) // State machine val av nummer
     {
       case 0: //number 0
         HAL_GPIO_WritePin(GPIOD, A_led_Pin, GPIO_PIN_RESET);
@@ -559,20 +684,37 @@ void display(int nr)
         //printf("number 9\n");
       break;
       
-      case 10://C, celsius for temp display
-        HAL_GPIO_WritePin(GPIOD, A_led_Pin, GPIO_PIN_RESET);
+      case 10://minus tecken i temp display
+        HAL_GPIO_WritePin(GPIOD, A_led_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOD, B_led_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(GPIOD, C_led_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(GPIOD, D_led_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOD, E_led_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOD, F_led_Pin, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(GPIOD, G_led_Pin, GPIO_PIN_SET);
-        printf("celcius\n");
+        HAL_GPIO_WritePin(GPIOD, D_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, E_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, F_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, G_led_Pin, GPIO_PIN_RESET);
       break;
-      
+
+      case 11://Om plus, inget i displayen
+        HAL_GPIO_WritePin(GPIOD, A_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, B_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, C_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, D_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, E_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, F_led_Pin, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOD, G_led_Pin, GPIO_PIN_SET);
+      break;
       default:
+ 
       break;
     } // end switch
+    
+    segmentSelect++;
+    counter++;
+    
+  
+}//end while
+
+    return;
 
 }
 //______________________________________________________________________________

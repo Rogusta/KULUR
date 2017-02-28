@@ -160,7 +160,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     static uint32_t     duty_in_microseconds = 0;
     static uint32_t     falling_timer_value = 0;
     static uint32_t     duty_array[40];
-    static int          preamble_flag;
+    static int          preamble_flag=0;
     static int          preamble_counter = 0;
     static int          array_counter = 0;
 
@@ -170,48 +170,57 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     falling_timer_value = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
     
     /* kan behövas en lock funtion här!*/
-
-    if(falling_timer_value > MINIMUM_DUTY_TICKS )
+    //Lock
+    HAL_TIM_IC_Stop_IT(&htim1, TIM_CHANNEL_2); // låsning av avbrottshanterare
+    
+    if(falling_timer_value > 500 )
     {
       
     //CHANNEL 2 starts counting from 0 when channel 1 is active
       /* Get the Input Capture value CHANNEL 2 */
       duty_in_microseconds = falling_timer_value;
       
-      if(duty_in_microseconds > 4000 && duty_in_microseconds < 7000 && preamble_flag == 0)
-      {
+     if(/*duty_in_microseconds > 500 &&*/ duty_in_microseconds < 800 && preamble_flag == 0)
+     {
         preamble_counter++; 
-        if(preamble_counter == 9)
+        if(preamble_counter >= 8)
         {
           preamble_flag = 1;
-         // preamble_counter = 0;
+          preamble_counter = 0;
         }
-  
-      }
-      else
-      {
-        preamble_counter = 0;
+        
       }
 
       if(preamble_flag == 1 && preamble_counter == 0)
       {
-      duty_array[array_counter]= duty_in_microseconds;
-      
-      array_counter++;
+        //duty_array[array_counter] = duty_in_microseconds;
+        
+        if(duty_in_microseconds > 400 && duty_in_microseconds < 800)
+        {
+          duty_array[array_counter] = duty_in_microseconds;
+
+        }
+        else if(duty_in_microseconds > 1200 && duty_in_microseconds < 1800)
+        {
+          duty_array[array_counter] = duty_in_microseconds;
+          
+        }
+          array_counter++;
+        
       } 
-
-
       
     }
     if(array_counter == 40)
     {
-      Radio_data(duty_array);
       array_counter = 0;
       preamble_flag = 0;
+      Radio_data(duty_array);
+      
     }
     
   }
-    
+    // Unlock 
+    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
       
 }
 
