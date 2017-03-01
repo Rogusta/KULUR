@@ -60,7 +60,7 @@ extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN Private defines */
 #define MICRO_IN_TICK 1
-#define MINIMUM_DUTY_TICKS 400
+#define MINIMUM_DUTY_TICKS 420
 /* USER CODE END Private defines */
 
 extern void Error_Handler(void);

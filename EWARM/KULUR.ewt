@@ -1169,10 +1169,16 @@
     <group>
       <name>User</name>
       <file>
+        <name>$PROJ_DIR$\..\Src\crc.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\Src\freertos.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Src\gpio.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Src\kulur_function.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Src\main.c</name>
@@ -1182,6 +1188,9 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Src\stm32f3xx_hal_msp.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Src\stm32f3xx_hal_timebase_TIM.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Src\stm32f3xx_it.c</name>
@@ -1209,6 +1218,12 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_cortex.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_crc.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_crc_ex.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\Drivers\STM32F3xx_HAL_Driver\Src\stm32f3xx_hal_dma.c</name>

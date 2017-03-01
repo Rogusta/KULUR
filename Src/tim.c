@@ -44,6 +44,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
+#include <stdbool.h>
 
 #include "gpio.h"
 
@@ -159,69 +160,86 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     static uint32_t     duty_in_microseconds = 0;
     static uint32_t     falling_timer_value = 0;
-    static uint32_t     duty_array[40];
-    static int          preamble_flag=0;
-    static int          preamble_counter = 0;
-    static int          array_counter = 0;
-
+    static uint32_t     preamble_bits[5];
+    static uint32_t     duty_array[200];
+    static bool         preamble_flag = false;
+    static uint8_t      preamble_counter = 0;
+    bool netId = false;
+    uint8_t netindex = 0;
+    
+    HAL_TIM_IC_Stop_IT(&htim1, TIM_CHANNEL_1); // låsning av avbrottshanterare
+    HAL_TIM_IC_Stop_IT(&htim1, TIM_CHANNEL_2);
+    
     if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
     {
-       
-    falling_timer_value = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
-    
-    /* kan behövas en lock funtion här!*/
-    //Lock
-    HAL_TIM_IC_Stop_IT(&htim1, TIM_CHANNEL_2); // låsning av avbrottshanterare
-    
-    if(falling_timer_value > 500 )
+          //Lock
+  
+    duty_in_microseconds = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+     
+    if(duty_in_microseconds > MINIMUM_DUTY_TICKS && !preamble_flag) //duty ticks 420
     {
       
     //CHANNEL 2 starts counting from 0 when channel 1 is active
       /* Get the Input Capture value CHANNEL 2 */
-      duty_in_microseconds = falling_timer_value;
       
-     if(/*duty_in_microseconds > 500 &&*/ duty_in_microseconds < 800 && preamble_flag == 0)
-     {
-        preamble_counter++; 
-        if(preamble_counter >= 8)
-        {
-          preamble_flag = 1;
-          preamble_counter = 0;
-        }
-        
-      }
-
-      if(preamble_flag == 1 && preamble_counter == 0)
+      if(duty_in_microseconds > 400 && duty_in_microseconds < 1300 )
       {
-        //duty_array[array_counter] = duty_in_microseconds;
-        
-        if(duty_in_microseconds > 400 && duty_in_microseconds < 800)
-        {
-          duty_array[array_counter] = duty_in_microseconds;
-
-        }
-        else if(duty_in_microseconds > 1200 && duty_in_microseconds < 1800)
-        {
-          duty_array[array_counter] = duty_in_microseconds;
-          
-        }
-          array_counter++;
-        
-      } 
-      
-    }
-    if(array_counter == 40)
-    {
-      array_counter = 0;
-      preamble_flag = 0;
-      Radio_data(duty_array);
-      
-    }
+        preamble_bits[preamble_counter] = duty_in_microseconds;
+        preamble_counter++; 
+      }
+      else
+        preamble_counter = 0;
     
-  }
-    // Unlock 
-    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
+      if(preamble_counter == 5)
+      {
+       preamble_flag = true;     
+      }
+    }
       
+     if(preamble_flag)
+     {
+       if(preamble_counter > 4 && preamble_counter < 200)
+       {
+         if((duty_in_microseconds >400 && duty_in_microseconds < 1300) || (duty_in_microseconds > 1300 && duty_in_microseconds < 1700) )
+         {
+           duty_array[preamble_counter - 5] = duty_in_microseconds;
+           preamble_counter++;
+         }
+       }
+       else if(preamble_counter == 200)
+       {
+          for(int i =0; i<193; i++)
+          {
+            if(duty_array[i] > 1300 && duty_array[i+1] <1100 && duty_array[i+2] > 1400
+                && duty_array[i+3] > 1400 && duty_array[i+4] < 1100 && duty_array[i+5] > 1400
+                && duty_array[i+6] > 1400 && duty_array[i+7] > 1400)
+            {
+              netId = true;
+              netindex = i;
+            }
+            if(netId)
+            {
+              break;
+            }
+
+          }
+          if(netId)
+          {
+          Radio_data(duty_array, netindex);
+          }
+          preamble_flag = false;
+          preamble_counter = 0;
+          netId = false;
+          
+       } 
+       else
+         preamble_counter++;
+         
+    }
+    }
+    // Unlock 
+    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);  
 }
 
 void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)

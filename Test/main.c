@@ -72,7 +72,7 @@ void RTC_TimeShow(uint16_t*, uint16_t*);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle);
 void Uart_function();
-void Radio_data(uint32_t duty_array[]);
+void Radio_data(uint32_t duty_array[], uint8_t);
 
 //void MX_FREERTOS_Init(void);
 
@@ -140,21 +140,22 @@ int main(void)
 
 }
 
-void Radio_data(uint32_t duty_array[])
+void Radio_data(uint32_t duty_array[], uint8_t netindex)
 {
   static uint32_t data_array[40];
-  uint32_t      BufferLength = 40;
+  //uint32_t      BufferLength = 40;
   
-  for(int i =0; i<40; i++)
-  {
-    /* Översätter värden i array till ett lr noll. (550-700)*/
-    if(duty_array[i] > 500 && duty_array[i] < 800)
+
+    for(int i = 0; i<40; i++)
     {
-      data_array[i] = 1;
+      if(duty_array[i+netindex] > 400 && duty_array[i+netindex] < 1300)
+      {
+        data_array[i] = 1;
+      }
+      else if(duty_array[i+netindex] > 1300 && duty_array[i+netindex] < 1700)
+        data_array[i] = 0;
     }
-    else
-      data_array[i] = 0;
-  }
+  
   /*
   data_array[0] = 0;
   data_array[1] = 1;
@@ -204,8 +205,8 @@ void Radio_data(uint32_t duty_array[])
   //printf("crc: %d\n", HAL_CRC_Calculate(&hcrc, data_array, 40));
   int temp_value = 0;
 
-  //if(HAL_CRC_Calculate(&hcrc, data_array, 40) == 0)
-  //{
+  if(HAL_CRC_Calculate(&hcrc, data_array, 40) == 0)
+  {
   
     //int temp_value = 0;
     for(int i = 0; i < 9; i++)
@@ -214,13 +215,10 @@ void Radio_data(uint32_t duty_array[])
     }
     //temp_value = temp_value - 1;
     //printf("temeratur %d \n", temp_value);
-    temp_value = temp_value/2;
+    //temp_value = temp_value/2;
 
     Display(temp_value, true);
-
-  //}
-  
-  return;
+  }// slut crc 
   
 }
 
@@ -332,8 +330,8 @@ void Uart_function()
     /*Reset transmission flag*/
     UartReady = RESET;
     
-    time[0] = (Buffer[0] - 48)*10 + (Buffer[1] - 48); //omvandlar Ascii till int värde
-    time[1] = (Buffer[3] - 48)*10 + (Buffer[4] - 48);
+    time[0] = (Buffer[0] - 48)*10 + (Buffer[1] - 48); //omvandlar Ascii till int värde 'timmar'
+    time[1] = (Buffer[3] - 48)*10 + (Buffer[4] - 48); // 'minuter', 
     //printf("tid: %d : %d\n", time[0], time[1]);
     
     RTC_TimeConfig(date, time);
@@ -399,12 +397,14 @@ void RTC_TimeShow(uint16_t *hours, uint16_t *minute)
 void Display(int temp, bool temp_flag)
 {
     
-    int counter = 0;
-    static int value_array[8];
+   int counter = 0;
+   
+   static int value_array[8];
     
    static int tempTioTal;
    static int tempEnTal;
    static int tempDecTal;
+   
     
   /*if(temp> 512) //ska visa minustecken i display
     {
